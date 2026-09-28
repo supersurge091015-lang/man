@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>용돈 기록장</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#222;--sub:#777;--line:#e7e4dc;--acc:#3b7d5c;--warn:#d9822b;--bad:#d24b4b;--bar:#ecebe5;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171a18;--card:#222623;--ink:#eee;--sub:#9a9f9b;--line:#333835;--acc:#5fb98a;--warn:#e59a4a;--bad:#e46a6a;--bar:#2e332f}}
+:root[data-theme="dark"]{--bg:#171a18;--card:#222623;--ink:#eee;--sub:#9a9f9b;--line:#333835;--acc:#5fb98a;--warn:#e59a4a;--bad:#e46a6a;--bar:#2e332f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.4}
+main{max-width:560px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:15px;margin:0 0 10px}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.nav b{font-size:17px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px}
+button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+input,select{font:inherit;width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.big{font-size:26px;font-weight:700}
+.sub{color:var(--sub);font-size:13px}
+.bar{height:8px;background:var(--bar);border-radius:5px;overflow:hidden;margin:6px 0 2px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.row{display:flex;gap:8px;margin-bottom:8px}
+.cat{padding:10px 0;border-top:1px solid var(--line)}
+.cat:first-of-type{border-top:0}
+.top{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.over{color:var(--bad);font-weight:600}
+.item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.item:first-of-type{border-top:0}
+.x{border:0;background:none;color:var(--sub);padding:2px 8px}
+.msg{font-size:13px;color:var(--warn);min-height:18px;margin-top:4px}
+details summary{cursor:pointer;font-size:14px;color:var(--sub)}
+.ro .w{display:none!important}
+#st{font-size:12px;color:var(--sub);text-align:center;margin:-4px 0 12px}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) 96px auto;gap:8px;margin-bottom:8px}
+.crow input{min-width:0}
+.ph{flex:1;border:1px dashed var(--line);border-radius:8px;padding:8px;text-align:center;font-size:14px;color:var(--sub);cursor:pointer}
+#pv{height:38px;border-radius:6px}
+#ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:9;padding:16px}
+#ov.on{display:flex}
+#ov img{max-width:100%;max-height:100%;border-radius:8px}
+</style>
+</head>
+<body>
+<main>
+  <div class="nav"><button id="prev">◀</button><b id="mlabel"></b><button id="next">▶</button></div>
+  <div id="st"></div>
+
+  <div class="card">
+    <div class="sub">이번 달 남은 용돈</div>
+    <div class="big" id="left"></div>
+    <div class="bar"><i id="tbar" style="width:0"></i></div>
+    <div class="sub" id="tsub"></div>
+  </div>
+
+  <div class="card w">
+    <h2>지출 기록</h2>
+    <div class="row"><input id="amt" type="number" inputmode="numeric" placeholder="금액(원)"><select id="cat"></select></div>
+    <div class="row"><input id="memo" placeholder="메모 (선택)"><input id="date" type="date" style="flex:1"></div>
+    <div class="row" id="prow"><label class="ph"><input id="pic" type="file" accept="image/*" hidden><span id="pl">📷 증거 사진 추가</span></label><img id="pv" alt="" hidden></div>
+    <button class="p" id="add" style="width:100%">기록하기</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card"><h2>분야별 사용 현황</h2><div id="cats"></div></div>
+
+  <div class="card"><h2>날짜별 사용</h2><div id="chart"></div><div class="sub" id="csub"></div></div>
+
+  <div class="card"><h2>지출 내역</h2><div id="list"></div></div>
+
+  <div class="card edit w">
+    <details>
+      <summary>설정 (월 용돈 · 분야별 한도)</summary>
+      <div style="margin-top:12px">
+        <div class="sub">한 달 용돈</div>
+        <input id="total" type="number" inputmode="numeric" style="margin:4px 0 12px">
+        <div class="sub">분야 이름 / 최대 금액</div>
+        <div id="editcats" style="margin-top:6px"></div>
+        <button id="addcat">+ 분야 추가</button>
+        <div class="msg" id="emsg"></div>
+      </div>
+    </details>
+  </div>
+</main>
+<div id="ov"><img id="ovi" alt="증거 사진"></div>
+<input id="pf" type="file" accept="image/*" hidden>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ▼ Supabase 프로젝트 설정 (Project Settings > API 에서 복사)
+const CFG={url:'https://vyorajtzyrfdsbyxecnf.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5b3JhanR6eXJmZHNieXhlY25mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDE0MTYsImV4cCI6MjEwNjE3NzQxNn0.4P2r-3omw6zV0JUXq9zvCwtLd_hzNtU__-Z_c3sXrLc'};
+const BUCKET='evidence';
+const KEY='allowance-v2';
+const $=id=>document.getElementById(id);
+const won=n=>Math.round(n).toLocaleString('ko-KR')+'원';
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ym=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+const today=()=>{const d=new Date();return ym(d)+'-'+String(d.getDate()).padStart(2,'0')};
+let S={total:200000,cats:[{id:'c1',name:'구독서비스',limit:50000},{id:'c2',name:'게임',limit:50000},{id:'c3',name:'음식',limit:50000},{id:'c4',name:'저축·선물',limit:50000}],ex:[]};
+let legacy=null;
+try{const r=localStorage.getItem(KEY);if(r){legacy=JSON.parse(r);S=JSON.parse(r)}}catch(e){}
+let sb=null,AS=false,CAN=true,dirty=null,pending=null,tgt=null;
+let cur=new Date();cur.setDate(1);
+const setStatus=t=>{$('st').textContent=t};
+const lsSave=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const editing=()=>{const a=document.activeElement;return !!a&&(a===$('total')||$('editcats').contains(a))};
+
+const photoUrl=p=>sb.storage.from(BUCKET).getPublicUrl(p).data.publicUrl;
+const upl=async blob=>{const p=uid()+'.jpg';const {error}=await sb.storage.from(BUCKET).upload(p,blob,{contentType:'image/jpeg'});if(error)throw error;return p};
+const putSet=async()=>{
+  if(!sb){lsSave();return}
+  const {error}=await sb.from('settings').upsert({id:1,total:S.total,cats:S.cats});
+  if(error)setStatus('설정을 저장하지 못했어요')};
+const queueSet=()=>{clearTimeout(dirty);dirty=setTimeout(async()=>{await putSet();dirty=null},700)};
+const putEx=async x=>{
+  if(sb){const {error}=await sb.from('expenses').upsert(x);if(error){setStatus('저장하지 못했어요');return false}}
+  const i=S.ex.findIndex(y=>y.id===x.id);if(i<0)S.ex.push(x);else S.ex[i]=x;
+  if(!sb)lsSave();
+  render(true);return true};
+const delEx=async id=>{
+  if(sb){const {error}=await sb.from('expenses').delete().eq('id',id);if(error){setStatus('삭제하지 못했어요');return}}
+  S.ex=S.ex.filter(x=>x.id!==id);if(!sb)lsSave();render(true)};
+const loadEx=async()=>{
+  const {data,error}=await sb.from('expenses').select('*').limit(5000);
+  if(error){setStatus('불러오지 못했어요');return}
+  S.ex=data;render(editing())};
+const loadSet=async()=>{
+  const {data,error}=await sb.from('settings').select('*').eq('id',1).maybeSingle();
+  if(error||!data||dirty)return;
+  S.total=data.total;S.cats=data.cats||[];render(editing())};
+
+function render(keepEdit){
+  document.body.classList.toggle('ro',!CAN);
+  const m=ym(cur);
+  $('mlabel').textContent=cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월';
+  const ex=S.ex.filter(e=>e.date&&e.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date)||(b.ts||0)-(a.ts||0));
+  const spent=ex.reduce((s,e)=>s+e.amount,0);
+  const left=S.total-spent;
+  $('left').textContent=won(left);
+  $('left').className='big'+(left<0?' over':'');
+  $('tbar').style.width=Math.min(100,spent/S.total*100||0)+'%';
+  $('tbar').style.background=spent>S.total?'var(--bad)':'var(--acc)';
+  $('tsub').textContent='쓴 돈 '+won(spent)+' / 용돈 '+won(S.total);
+
+  const sel=$('cat'),v=sel.value;
+  sel.innerHTML=S.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  if(v)sel.value=v;
+
+  $('cats').innerHTML=S.cats.map(c=>{
+    const u=ex.filter(e=>e.cat===c.id).reduce((s,e)=>s+e.amount,0);
+    const pct=c.limit?u/c.limit*100:0;
+    const col=pct>100?'var(--bad)':pct>=80?'var(--warn)':'var(--acc)';
+    const rem=c.limit-u;
+    return `<div class="cat"><div class="top"><span>${esc(c.name||'이름없음')}</span><span>${won(u)} / ${won(c.limit)}</span></div>
+    <div class="bar"><i style="width:${Math.min(100,pct)}%;background:${col}"></i></div>
+    <div class="sub ${rem<0?'over':''}">${rem<0?won(-rem)+' 초과':won(rem)+' 남음'}</div></div>`}).join('')||'<div class="sub">분야가 없어요.</div>';
+
+  $('list').innerHTML=ex.map(e=>{
+    const c=S.cats.find(c=>c.id===e.cat);
+    const ph=e.ph?`<button class="x" data-ph="${e.id}">🖼</button>`:(CAN&&AS?`<button class="x" data-ph="${e.id}">📎</button>`:'');
+    const dl=CAN?`<button class="x" data-del="${e.id}">✕</button>`:'';
+    return `<div class="item"><div><div>${esc(e.memo||'(메모 없음)')}</div><div class="sub">${e.date.slice(5).replace('-','/')} · ${c?esc(c.name):'삭제된 분야'}</div></div>
+    <div>${won(e.amount)}${ph}${dl}</div></div>`}).join('')||'<div class="sub">이 달 기록이 없어요.</div>';
+
+  const dim=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
+  const day=Array(dim).fill(0);ex.forEach(e=>day[+e.date.slice(8,10)-1]+=e.amount);
+  const mx=Math.max(...day,1),W=320,H=110,bw=W/dim;
+  let g=`<svg viewBox="0 0 ${W} ${H+16}" style="width:100%;height:auto">`;
+  day.forEach((v,i)=>{const h=v/mx*H;g+=`<rect x="${i*bw+1}" y="${H-h}" width="${Math.max(1,bw-2)}" height="${h}" rx="1.5" style="fill:var(--acc)"><title>${i+1}일 ${won(v)}</title></rect>`});
+  [1,Math.ceil(dim/2),dim].forEach(d=>g+=`<text x="${(d-1)*bw+bw/2}" y="${H+12}" font-size="9" text-anchor="middle" style="fill:var(--sub)">${d}일</text>`);
+  g+=`<line x1="0" x2="${W}" y1="${H}" y2="${H}" style="stroke:var(--line)"/></svg>`;
+  $('chart').innerHTML=g;
+  $('csub').textContent=spent?`가장 많이 쓴 날: ${day.indexOf(mx)+1}일 (${won(mx)})`:'이 달 기록이 없어요.';
+
+  if(!keepEdit)$('total').value=S.total;
+  if(!keepEdit)$('editcats').innerHTML=S.cats.map(c=>`<div class="crow"><input placeholder="분야 이름" data-n="${c.id}" value="${esc(c.name)}"><input data-l="${c.id}" type="number" inputmode="numeric" value="${c.limit}"><button data-rc="${c.id}">삭제</button></div>`).join('');
+  const sum=S.cats.reduce((s,c)=>s+c.limit,0);
+  $('emsg').textContent=sum>S.total?`분야 한도 합계(${won(sum)})가 용돈보다 ${won(sum-S.total)} 많아요.`:sum<S.total?`아직 배정 안 된 돈: ${won(S.total-sum)}`:'';
+}
+
+const rd=f=>new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);c.toBlob(b=>res(b?{blob:b,url:c.toDataURL('image/jpeg',.5)}:null),'image/jpeg',.75)};im.onerror=()=>res(null);im.src=r.result};r.onerror=()=>res(null);r.readAsDataURL(f)});
+
+$('prev').onclick=()=>{cur.setMonth(cur.getMonth()-1);render(true)};
+$('next').onclick=()=>{cur.setMonth(cur.getMonth()+1);render(true)};
+$('date').value=today();
+$('pic').onchange=async e=>{const f=e.target.files[0];if(!f)return;pending=await rd(f);$('pv').hidden=!pending;if(pending){$('pv').src=pending.url;$('pl').textContent='사진 변경'}};
+$('pf').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f||!tgt||!AS)return;
+  const r=await rd(f);if(!r)return;
+  try{const id=await upl(r.blob);const x=S.ex.find(x=>x.id===tgt);if(x){const {error}=await sb.from('expenses').update({ph:id}).eq('id',tgt);if(error)throw error;x.ph=id;render(true)}}catch(err){setStatus('사진을 올리지 못했어요')}
+};
+$('ov').onclick=()=>$('ov').classList.remove('on');
+$('add').onclick=async()=>{
+  if(!CAN||$('add').disabled)return;
+  const a=parseInt($('amt').value,10),cat=$('cat').value;
+  if(!a||a<=0){$('msg').textContent='금액을 입력해 주세요.';return}
+  if(!cat){$('msg').textContent='먼저 설정에서 분야를 추가해 주세요.';return}
+  $('add').disabled=true;
+  const date=$('date').value||today();let ph=null,extra='';
+  if(pending&&AS){try{ph=await upl(pending.blob)}catch(err){extra=' (사진은 올리지 못했어요)'}}
+  const x={id:uid(),date,cat,amount:a,memo:$('memo').value.trim(),ph,ts:Date.now()};
+  const ok=await putEx(x);
+  if(!ok){$('msg').textContent='저장하지 못했어요. 다시 시도해 주세요.';$('add').disabled=false;return}
+  const c=S.cats.find(c=>c.id===cat);
+  const u=S.ex.filter(e=>e.cat===cat&&e.date.startsWith(date.slice(0,7))).reduce((s,e)=>s+e.amount,0);
+  $('msg').textContent=(u>c.limit?`⚠ ${c.name} 한도를 ${won(u-c.limit)} 넘었어요!`:u>=c.limit*0.8?`${c.name} 한도의 ${Math.round(u/c.limit*100)}%를 썼어요.`:'')+extra;
+  pending=null;$('pic').value='';$('pv').hidden=true;$('pl').textContent='📷 증거 사진 추가';
+  $('amt').value='';$('memo').value='';
+  cur=new Date(date+'T00:00:00');cur.setDate(1);
+  render(true);$('add').disabled=false;
+};
+document.addEventListener('click',async e=>{
+  const d=e.target.dataset;
+  if(d.del&&CAN)await delEx(d.del);
+  if(d.ph){const x=S.ex.find(x=>x.id===d.ph);if(x&&typeof x.ph==='string'){$('ovi').src=photoUrl(x.ph);$('ov').classList.add('on')}else if(CAN&&AS){tgt=d.ph;$('pf').click()}}
+  if(d.rc&&CAN){if(e.target.dataset.arm){S.cats=S.cats.filter(c=>c.id!==d.rc);await putSet();render()}else{e.target.dataset.arm=1;e.target.textContent='정말?'}}
+});
+document.addEventListener('input',e=>{
+  if(!CAN)return;
+  const d=e.target.dataset;let ch=false;
+  if(e.target.id==='total'){S.total=Math.max(0,parseInt(e.target.value,10)||0);ch=true}
+  if(d.n){S.cats.find(c=>c.id===d.n).name=e.target.value;ch=true}
+  if(d.l){S.cats.find(c=>c.id===d.l).limit=Math.max(0,parseInt(e.target.value,10)||0);ch=true}
+  if(ch){queueSet();render(true)}
+});
+$('addcat').onclick=async()=>{if(!CAN)return;S.cats.push({id:uid(),name:'새 분야',limit:0});await putSet();render()};
+render();
+
+(async()=>{
+  if(CFG.url.startsWith('http')&&window.supabase){try{sb=supabase.createClient(CFG.url,CFG.key)}catch(e){sb=null}}
+  if(!sb){$('prow').style.display='none';setStatus('이 기기에만 저장 중 (Supabase 미연결)');render();return}
+  AS=true;setStatus('연결 중…');
+  const {data:row,error}=await sb.from('settings').select('*').eq('id',1).maybeSingle();
+  if(error){setStatus('연결에 실패했어요. Supabase 설정을 확인해 주세요.');render();return}
+  if(row){S.total=row.total;S.cats=row.cats||[]}
+  else{
+    await putSet();
+    if(legacy&&legacy.ex)for(const x of legacy.ex)await sb.from('expenses').upsert({...x,ph:null,ts:x.ts||Date.now()});
+  }
+  await loadEx();render();
+  sb.channel('allowance')
+    .on('postgres_changes',{event:'*',schema:'public',table:'expenses'},loadEx)
+    .on('postgres_changes',{event:'*',schema:'public',table:'settings'},loadSet)
+    .subscribe(st=>{
+      if(st==='SUBSCRIBED')setStatus('실시간 동기화 중 ✓');
+      else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED')setStatus('연결이 끊겼어요. 새로고침해 주세요.');
+    });
+})();
+</script>
+</body>
+</html>
